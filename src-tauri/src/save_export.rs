@@ -1,8 +1,6 @@
 //! # Save Export Module
 //!
-//! Writes signed save exports to the player's Downloads folder. The frontend fetches the
-//! export from the server; this module only puts it on disk, since the webview can't
-//! reliably save files itself on every platform.
+//! Writes signed save codes to the player's Downloads folder.
 
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
@@ -14,20 +12,15 @@ const EXTENSION: &str = "bymsave";
 /// Most copies of the same name to try before giving up.
 const MAX_ATTEMPTS: u32 = 100;
 
-/// Every export's file name starts with this, so the command can't be used to create
-/// arbitrarily named files (including names Windows reserves, like `CON`).
 const NAME_PREFIX: &str = "bym-save-";
 
 const MAX_NAME_LENGTH: usize = 80;
 
-/// What every save code starts with.
 const CODE_PREFIX: &str = "bymr-save.";
 
-/// Far above any real save code, which is under 200 KB.
 const MAX_CODE_BYTES: usize = 2 * 1024 * 1024;
 
-/// Keeps a file name to letters, numbers, `-` and `_`, so it can't point outside the folder.
-/// The name must start with `bym-save-` and be a sensible length.
+/// Keeps a file name to letters, numbers, `-` and `_`, and requires the `bym-save-` prefix.
 fn sanitize(file_name: &str) -> Option<String> {
     if !file_name.starts_with(NAME_PREFIX) || file_name.len() <= NAME_PREFIX.len() || file_name.len() > MAX_NAME_LENGTH {
         return None;
@@ -41,8 +34,7 @@ fn sanitize(file_name: &str) -> Option<String> {
     )
 }
 
-/// Whether the text looks like a save code: the prefix, then only the characters a code
-/// can contain. This keeps the command from writing anything else to disk.
+/// Whether the text looks like a save code, so nothing else can be written to disk.
 fn is_save_code(contents: &str) -> bool {
     contents.len() <= MAX_CODE_BYTES
         && contents.starts_with(CODE_PREFIX)
@@ -57,8 +49,7 @@ fn candidate(dir: &Path, stem: &str, attempt: u32) -> PathBuf {
     }
 }
 
-/// The system's Downloads folder. Where the system doesn't name one (some minimal Linux
-/// setups have no XDG user dirs), `~/Downloads` if it exists, otherwise the home folder.
+/// The system's Downloads folder, falling back to `~/Downloads` or the home folder.
 fn downloads_dir(app: &AppHandle) -> Result<PathBuf, String> {
     if let Ok(dir) = app.path().download_dir() {
         return Ok(dir);
@@ -70,8 +61,7 @@ fn downloads_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(if downloads.is_dir() { downloads } else { home })
 }
 
-/// Writes a save export to the player's Downloads folder and returns the full path.
-/// An existing file is never overwritten.
+/// Writes a save code to the Downloads folder without overwriting, and returns the path.
 ///
 /// # Arguments
 ///
@@ -94,7 +84,6 @@ pub async fn save_export_file(app: AppHandle, file_name: String, contents: Strin
     for attempt in 1..=MAX_ATTEMPTS {
         let path = candidate(&dir, &stem, attempt);
 
-        // create_new fails if the file exists, so two exports can't race onto one name.
         let mut file = match OpenOptions::new().write(true).create_new(true).open(&path).await {
             Ok(file) => file,
             Err(err) if err.kind() == ErrorKind::AlreadyExists => continue,
@@ -108,7 +97,7 @@ pub async fn save_export_file(app: AppHandle, file_name: String, contents: Strin
 
         if let Err(err) = written {
             drop(file);
-            let _ = tokio::fs::remove_file(&path).await; // Don't leave half a save behind
+            let _ = tokio::fs::remove_file(&path).await;
             return Err(format!("Could not save {}: {err}", path.display()));
         }
 
