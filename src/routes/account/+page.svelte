@@ -7,6 +7,7 @@
   import { getAccountDetails } from "#lib/api/player.js";
   import { signOut } from "#lib/api/session.js";
   import townhall from "#lib/assets/art/townhall.png";
+  import ExportSaveSetting from "#lib/components/account/ExportSaveSetting.svelte";
   import ProfileCard from "#lib/components/account/ProfileCard.svelte";
   import SettingRow from "#lib/components/account/SettingRow.svelte";
   import ShinySetting from "#lib/components/account/ShinySetting.svelte";
@@ -66,13 +67,13 @@
     <div>
       <p class="eyebrow text-primary">Your account</p>
       <h1 class="mt-3 display text-[40px] leading-[1.1]">Account <em>settings.</em></h1>
-      <p class="mt-2 text-[13px] text-muted-foreground">Your name, shiny and session on this device.</p>
+      <p class="mt-2 text-[13px] text-muted-foreground">Your name, shiny, save and session on this device.</p>
     </div>
     <img src={townhall} alt="" class="h-24 w-auto self-center" />
   </header>
 
   {#if !user.signedIn}
-    <SignInPrompt title="Sign in to manage your account" description="Your username, shiny and session settings live here." />
+    <SignInPrompt title="Sign in to manage your account" description="Your username, shiny, save export and session settings live here." />
   {:else}
     <div class="grid min-h-0 flex-1 grid-cols-[300px_1fr] max-[1100px]:grid-cols-[260px_1fr]">
       <aside class="min-h-0 overflow-auto border-r bg-card px-7 py-6">
@@ -91,7 +92,7 @@
 
       <div class="min-h-0 overflow-auto">
         {#if loading}
-          {#each { length: 3 }, index (index)}
+          {#each { length: 4 }, index (index)}
             <div class="grid grid-cols-[minmax(0,500px)_minmax(0,360px)] gap-12 border-b px-7 py-6 max-[1100px]:gap-8">
               <div class="flex gap-4">
                 <div class="size-9 shrink-0 animate-pulse rounded-lg bg-accent"></div>
@@ -111,6 +112,7 @@
         {:else if details}
           <UsernameSetting {details} onupdate={(next) => (details = next)} />
           <ShinySetting {details} onupdate={(next) => (details = next)} />
+          <ExportSaveSetting {details} />
           <SettingRow title="Session" description={sessionNote}>
             {#snippet icon()}<MonitorSmartphone class="size-[18px]" />{/snippet}
             <Button variant="outline" class="w-fit" onclick={leave}><LogOut />Sign out</Button>

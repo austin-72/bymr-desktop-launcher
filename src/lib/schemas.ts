@@ -80,6 +80,14 @@ export const UsernameChange = z.object({ username: z.string(), nextChangeAt: z.c
 /** The answer to a settings update */
 export const SettingsUpdate = z.object({ settings: Settings });
 
+/** A signed save export: one line of text the player pastes when registering on a custom server */
+export const SaveExport = z.object({
+  code: z.string().startsWith("bymr-save."),
+  exportedAt: z.string(),
+});
+
+export type SaveExport = z.infer<typeof SaveExport>;
+
 /**
  * The player saved in localStorage when "Remember me" is ticked, with the server their session belongs to.
  * Fields that are missing or broken fall back to empty, so an older save still loads; only a missing token

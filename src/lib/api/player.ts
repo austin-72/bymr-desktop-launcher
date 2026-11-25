@@ -1,7 +1,9 @@
 import { apiRequest } from "#lib/api/request.js";
-import { Account, AccountDetails, SettingsUpdate, UsernameChange, type Settings } from "#lib/schemas.js";
+import { Account, AccountDetails, SaveExport, SettingsUpdate, UsernameChange, type Settings } from "#lib/schemas.js";
 
 const TIMEOUT_MS = 5000;
+
+const EXPORT_TIMEOUT_MS = 30_000;
 
 /**
  * Fetches the signed-in player's account.
@@ -38,6 +40,15 @@ export const changeUsername = async (username: string) =>
  */
 export const updateSettings = async (settings: Settings) =>
   SettingsUpdate.parse(await apiRequest("POST", "/player/settings", { body: settings })).settings;
+
+/**
+ * Exports the signed-in player's yards as a signed save code, for use on a custom server.
+ *
+ * @returns {Promise<SaveExport>} The save code and when it was made.
+ * @throws {ApiError | Error} When exports aren't set up on the server, the hourly limit is reached, or the request fails.
+ */
+export const exportSave = async () =>
+  SaveExport.parse(await apiRequest("GET", "/player/save/export", { timeoutMs: EXPORT_TIMEOUT_MS }));
 
 /**
  * Ends the player's session on the server.

@@ -3,6 +3,7 @@
 
 mod flash_input;
 mod networking;
+mod save_export;
 mod version_manager;
 
 #[cfg(target_os = "linux")]
@@ -29,7 +30,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             initialize_app,
             launch_game,
-            get_current_game_version
+            get_current_game_version,
+            save_export::save_export_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
